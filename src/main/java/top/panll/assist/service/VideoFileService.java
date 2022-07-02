@@ -140,7 +140,10 @@ public class VideoFileService {
                 String endTimeStr = file.getName().replace(".mp4", "");
 
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+                //之前的格式，此格式不兼容windows
+                //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+                //换成兼容windows的格式 HH-mm-ss
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH-mm-ss");
 
                 File dateFile = new File(file.getParent());
 
@@ -149,8 +152,12 @@ public class VideoFileService {
                 long endTime = startTime + durationLong;
                 endTime = endTime - endTime%1000;
 
+                //原来的代码，以 - 连接时间
+                //String newName = file.getAbsolutePath().replace(file.getName(),
+                //        simpleDateFormat.format(startTime) + "-" + simpleDateFormat.format(endTime) + "-" + durationLong + ".mp4");
+                // 换成以下划线 _ 方式连接时间
                 String newName = file.getAbsolutePath().replace(file.getName(),
-                        simpleDateFormat.format(startTime) + "-" + simpleDateFormat.format(endTime) + "-" + durationLong + ".mp4");
+                        simpleDateFormat.format(startTime) + "_" + simpleDateFormat.format(endTime) + "_" + durationLong + ".mp4");
                 file.renameTo(new File(newName));
                 logger.debug("[处理文件] {}", file.getName());
             } catch (IOException e) {
@@ -219,8 +226,10 @@ public class VideoFileService {
         if (app == null || stream == null) {
             return result;
         }
-
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //之前的代码
+        //SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //现在的代码
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
         SimpleDateFormat formatterForDate = new SimpleDateFormat("yyyy-MM-dd");
         String startTimeStr = null;
         String endTimeStr = null;
@@ -280,8 +289,12 @@ public class VideoFileService {
                 File[] files = dateFile.listFiles((File dir, String name) ->{
                     boolean filterResult = true;
                     File currentFile = new File(dir + File.separator + name);
-                    if (currentFile.isFile()  && name.contains(":") && name.endsWith(".mp4") && !name.startsWith(".") && currentFile.length() > 0){
-                        String[] timeArray = name.split("-");
+                    //以前的条件判断，现在替换为正则表达式
+                    //currentFile.isFile()  && name.contains(":") && name.endsWith(".mp4") && !name.startsWith(".") && currentFile.length() > 0
+                    String regExp = "[0-9]{2}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}_\\d+.mp4";
+                    if (name.matches(regExp)){
+                        //String[] timeArray = name.split("-"); 以前的代码，因为换成下划线了，所以这里替换
+                        String[] timeArray = name.split("_");
                         if (timeArray.length == 3){
                             String fileStartTimeStr = dateFile.getName() + " " + timeArray[0];
                             String fileEndTimeStr = dateFile.getName() + " " + timeArray[1];
@@ -310,15 +323,17 @@ public class VideoFileService {
         if (result.size() > 0) {
             result.sort((File f1, File f2) -> {
                 int sortResult = 0;
-                String[] timeArray1 = f1.getName().split("-");
-                String[] timeArray2 = f2.getName().split("-");
+                //String[] timeArray1 = f1.getName().split("-"); 替换下划线
+                String[] timeArray1 = f1.getName().split("_");
+                //String[] timeArray2 = f2.getName().split("-"); 替换下划线
+                String[] timeArray2 = f2.getName().split("_");
                 if (timeArray1.length == 3 && timeArray2.length == 3){
                     File dateFile1 = f1.getParentFile();
                     File dateFile2 = f2.getParentFile();
                     String fileStartTimeStr1 = dateFile1.getName() + " " + timeArray1[0];
                     String fileStartTimeStr2 = dateFile2.getName() + " " + timeArray2[0];
                     try {
-                        sortResult = formatter.parse(fileStartTimeStr1).compareTo(formatter.parse(fileStartTimeStr2));
+                        sortResult = formatter.parse(fileStartTimeStr2).compareTo(formatter.parse(fileStartTimeStr1));
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }

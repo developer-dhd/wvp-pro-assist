@@ -1,5 +1,7 @@
 package top.panll.assist.controller;
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
@@ -17,10 +19,12 @@ import top.panll.assist.dto.MergeOrCutTaskInfo;
 import top.panll.assist.dto.SignInfo;
 import top.panll.assist.dto.SpaceInfo;
 import top.panll.assist.service.VideoFileService;
+import top.panll.assist.utils.CustomPage;
 import top.panll.assist.utils.PageInfo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,7 +42,7 @@ public class RecordController {
     @Autowired
     private VideoFileService videoFileService;
 
-    private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
     /**
@@ -46,23 +50,10 @@ public class RecordController {
      * @return
      */
     @ApiOperation("分页获取app+stream的列表")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="page", value = "当前页", required = true, dataTypeClass = Integer.class),
-            @ApiImplicitParam(name="count", value = "每页查询数量", required = true, dataTypeClass = Integer.class),
-    })
     @GetMapping(value = "/list")
     @ResponseBody
-    public WVPResult<PageInfo<Map<String, String>>> getList(@RequestParam int page,
-                                                  @RequestParam int count){
-        WVPResult<PageInfo<Map<String, String>>> result = new WVPResult<>();
-        List<Map<String, String>> appList = videoFileService.getList();
-        result.setCode(0);
-        result.setMsg("success");
-
-        PageInfo<Map<String, String>> stringPageInfo = new PageInfo<>(appList);
-        stringPageInfo.startPage(page, count);
-        result.setData(stringPageInfo);
-        return result;
+    public List<Map<String, String>> getList(){
+        return videoFileService.getList();
     }
 
     /**
@@ -185,7 +176,7 @@ public class RecordController {
     })
     @GetMapping(value = "/file/list")
     @ResponseBody
-    public WVPResult<PageInfo<String>> getRecordList(@RequestParam int page,
+    public WVPResult<PageInfo<JSONObject>> getRecordList(@RequestParam int page,
                                                      @RequestParam int count,
                                                      @RequestParam String app,
                                                      @RequestParam String stream,
@@ -193,9 +184,10 @@ public class RecordController {
                                                      @RequestParam(required = false) String endTime
     ){
 
-        WVPResult<PageInfo<String>> result = new WVPResult<>();
+        WVPResult<PageInfo<JSONObject>> result = new WVPResult<>();
         // 开始时间与结束时间可不传或只传其一
-        List<String> recordList = new ArrayList<>();
+        //List<String> recordList = new ArrayList<>(); 之前的代码，这里我们返回JSON 数组
+        List<JSONObject> recordList = new ArrayList<>();
         try {
             Date startTimeDate  = null;
             Date endTimeDate  = null;
@@ -207,14 +199,34 @@ public class RecordController {
             }
 
             List<File> filesInTime = videoFileService.getFilesInTime(app, stream, startTimeDate, endTimeDate);
+
+            /*之前的代码，改成我们想要的结果
             if (filesInTime != null && filesInTime.size() > 0) {
                 for (File file : filesInTime) {
                     recordList.add(file.getName());
                 }
+            }*/
+            if (filesInTime != null && filesInTime.size() > 0) {
+                if (filesInTime.size() > 10)  filesInTime = filesInTime.subList(0, 10);
+                filesInTime.forEach(file -> {
+                    String[] arr = file.getName().replaceAll("-", ":").split("_");
+                    String startTimeStr = arr[0];
+                    String endTimeStr = arr[1];
+                    String[] tmepArr = arr[2].split("[.]");
+                    String duration = tmepArr[0];
+                    String videoFormat = tmepArr[1];
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("startTime", startTimeStr);
+                    tempJson.put("endTime", endTimeStr);
+                    tempJson.put("videoFormat", videoFormat);
+                    tempJson.put("originalName", file.getName());
+                    tempJson.put("duration", DateUtil.secondToTime(Convert.toInt(duration) / 1000));
+                    recordList.add(tempJson);
+                });
             }
             result.setCode(0);
             result.setMsg("success");
-            PageInfo<String> stringPageInfo = new PageInfo<>(recordList);
+            PageInfo<JSONObject> stringPageInfo = new PageInfo<>(recordList);
             stringPageInfo.startPage(page, count);
             result.setData(stringPageInfo);
         } catch (ParseException e) {

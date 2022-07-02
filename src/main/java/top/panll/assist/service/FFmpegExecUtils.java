@@ -79,9 +79,9 @@ public class FFmpegExecUtils implements InitializingBean{
     }
 
     @Async
-    public void mergeOrCutFile(List<File> fils, File dest,  String destFileName, VideoHandEndCallBack callBack){
+    public void mergeOrCutFile(List<File> fils, File dest, String destFileName, VideoHandEndCallBack callBack) {
 
-        if (fils == null || fils.size() == 0 || ffmpeg == null || ffprobe == null || dest== null || !dest.exists()){
+        if (fils == null || fils.size() == 0 || ffmpeg == null || ffprobe == null || dest == null || !dest.exists()) {
             callBack.run("error", 0.0, null);
             return;
         }
@@ -94,13 +94,13 @@ public class FFmpegExecUtils implements InitializingBean{
         String fileListName = tempFile.getAbsolutePath() + File.separator + "fileList";
         double durationAll = 0.0;
         try {
-            BufferedWriter bw =new BufferedWriter(new FileWriter(fileListName));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(fileListName));
             for (File file : fils) {
-                String[] split = file.getName().split("-");
+                String[] split = file.getName().split("_");
                 if (split.length != 3) continue;
                 String durationStr = split[2].replace(".mp4", "");
-                Double duration = Double.parseDouble(durationStr)/1000;
-                bw.write("file " + file.getAbsolutePath());
+                Double duration = Double.parseDouble(durationStr) / 1000;
+                bw.write("file " + "'" + file.getAbsolutePath() + "'");
                 bw.newLine();
                 durationAll += duration;
             }
@@ -141,9 +141,9 @@ public class FFmpegExecUtils implements InitializingBean{
 //                    progress.speed
 //            ));
 
-            if (progress.status.equals(Progress.Status.END)){
+            if (progress.status.equals(Progress.Status.END)) {
                 callBack.run(progress.status.name(), percentage, recordFileResultPath);
-            }else {
+            } else {
                 callBack.run(progress.status.name(), percentage, null);
             }
 
