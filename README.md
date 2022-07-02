@@ -5,7 +5,7 @@ wvp-pro-assist是wvp-pro的辅助录像程序，也可单独跟zlm一起使用�
 
 原项目地址：[点击跳转](https://github.com/648540858/wvp-pro-assist)
 
-**本项目的代码<span style="color:red;margin-left:5px">经过修改！！！<span>**
+**本项目的代码 经过修改！经过修改！！经过修改！！！**
 **修改的地方在代码里面基本都有标注。**
 
 为什么修改代码？
