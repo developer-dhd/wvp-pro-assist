@@ -10,7 +10,7 @@ wvp-pro-assist是wvp-pro的辅助录像程序，也可单独跟zlm一起使用�
 
 为什么修改代码？
 
-1. 为了配合本人新开发的前端UI，前端UI项目地址：[点击跳转](https://github.com/648540858/wvp-pro-assist)
+1. 为了配合本人新开发的前端UI，前端UI项目地址：[点击跳转](https://github.com/developer-dhd/wvp-antd-ui)
 
 2. 兼容windows系统，代码中对录制文件命名采用了`:`,在windows系统中不支持该符号命名
 
